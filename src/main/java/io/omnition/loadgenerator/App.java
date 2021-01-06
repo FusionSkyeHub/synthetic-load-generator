@@ -1,5 +1,13 @@
 package io.omnition.loadgenerator;
 
+import com.beust.jcommander.JCommander;
+import com.beust.jcommander.Parameter;
+import com.google.gson.Gson;
+import io.omnition.loadgenerator.LoadGeneratorParams.RootServiceRoute;
+import io.omnition.loadgenerator.util.*;
+import org.apache.log4j.Logger;
+import zipkin2.codec.SpanBytesEncoder;
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.nio.file.Files;
@@ -9,30 +17,20 @@ import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-import io.omnition.loadgenerator.util.ITraceEmitter;
-import io.omnition.loadgenerator.util.ZipkinTraceEmitter;
-import org.apache.log4j.Logger;
-
-import com.beust.jcommander.JCommander;
-import com.beust.jcommander.Parameter;
-import com.google.gson.Gson;
-
-import io.omnition.loadgenerator.LoadGeneratorParams.RootServiceRoute;
-import io.omnition.loadgenerator.util.JaegerTraceEmitter;
-import io.omnition.loadgenerator.util.LogLevel;
-import io.omnition.loadgenerator.util.ScheduledTraceGenerator;
-import io.omnition.loadgenerator.util.SummaryLogger;
-
-import zipkin2.codec.SpanBytesEncoder;
-
 public class App {
     private final static Logger logger = Logger.getLogger(App.class);
 
-    @Parameter(names = "--paramsFile", description = "Name of the file containing the topology params", required = true)
+    @Parameter(names = "--paramsFile", description = "配置文件名称", required = true)
     private String topologyFile;
 
-    @Parameter(names = "--logLevel", description = "Level of log verbosity (0..2). 0=Silent, 1=Minimum, 2=Verbose. If unspecified defaults to 2.", required = false)
+    @Parameter(names = "--logLevel", description = "0=Silent, 1=Minimum, 2=Verbose，默认=2.", required = false)
     private Integer logLevelParam = 2;
+
+    @Parameter(names = "--initialDelayMs", description = "启动延迟", required = false)
+    private long initialDelayMs = 1;
+
+    @Parameter(names = "--periodMs", description = "发送频率", required = false)
+    private long periodMs = 1;
 
     @Parameter(names = "--jaegerCollectorUrl", description = "URL of the jaeger collector", required = false)
     private String jaegerCollectorUrl = null;
@@ -52,7 +50,7 @@ public class App {
     @Parameter(names = "--flushIntervalMillis", description = "How often to flush traces", required = false)
     private long flushIntervalMillis = TimeUnit.SECONDS.toMillis(5);
 
-    @Parameter(names = { "--help", "-h" }, help = true)
+    @Parameter(names = {"--help", "-h"}, help = true)
     private boolean help;
 
     private List<ScheduledTraceGenerator> scheduledTraceGenerators = new ArrayList<>();
@@ -77,7 +75,8 @@ public class App {
                 }
             });
             app.init();
-            app.start();
+
+            app.start(app.initialDelayMs, app.periodMs);
         } catch (Exception e) {
             logger.error("Error running load generator: " + e, e);
             System.exit(1);
@@ -93,7 +92,7 @@ public class App {
         this.logLevel = LogLevel.values()[this.logLevelParam];
 
         File f = new File(this.topologyFile);
-        if(!f.exists() || f.isDirectory()) {
+        if (!f.exists() || f.isDirectory()) {
             logger.error("Invalid topology file specified: " + this.topologyFile);
             throw new FileNotFoundException(this.topologyFile);
         }
@@ -112,9 +111,10 @@ public class App {
         }
     }
 
-    public void start() throws Exception {
+    public void start(long initialDelayMs
+            , long periodMs) throws Exception {
         for (ScheduledTraceGenerator gen : this.scheduledTraceGenerators) {
-            gen.start();
+            gen.start(initialDelayMs, periodMs);
         }
         latch.await();
     }

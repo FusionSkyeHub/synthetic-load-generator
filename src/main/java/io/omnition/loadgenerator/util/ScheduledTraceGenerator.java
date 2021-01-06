@@ -1,14 +1,14 @@
 package io.omnition.loadgenerator.util;
 
+import io.omnition.loadgenerator.model.topology.Topology;
+import io.omnition.loadgenerator.model.trace.Trace;
+import org.apache.log4j.Logger;
+
+import java.time.Duration;
 import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-
-import org.apache.log4j.Logger;
-
-import io.omnition.loadgenerator.model.topology.Topology;
-import io.omnition.loadgenerator.model.trace.Trace;
 
 public class ScheduledTraceGenerator {
     private static final Logger logger = Logger.getLogger(ScheduledTraceGenerator.class);
@@ -25,14 +25,15 @@ public class ScheduledTraceGenerator {
     private final LogLevel logLevel;
     private final SummaryLogger summaryLogger;
 
+
     public ScheduledTraceGenerator(
-        Topology topology,
-        String service, 
-        String route, 
-        int tracesPerHour,
-        ITraceEmitter emitter, 
-        LogLevel logLevel, 
-        SummaryLogger summaryLogger
+            Topology topology,
+            String service,
+            String route,
+            int tracesPerHour,
+            ITraceEmitter emitter,
+            LogLevel logLevel,
+            SummaryLogger summaryLogger
     ) {
         this.scheduler = Executors.newScheduledThreadPool(NUM_THREADS);
         this.tracesPerHour = tracesPerHour;
@@ -44,11 +45,12 @@ public class ScheduledTraceGenerator {
         this.summaryLogger = summaryLogger;
     }
 
-    public void start() {
+    public void start(long initialDelayMs, long periodMs) {
         logger.info(String.format("Starting trace generation for service %s, route %s, %d traces/hr",
                 this.service, this.route, this.tracesPerHour));
-        scheduler.scheduleAtFixedRate(() -> emitOneTrace(), TimeUnit.SECONDS.toMillis(1),
-                TimeUnit.HOURS.toMillis(1) / this.tracesPerHour, TimeUnit.MILLISECONDS);
+
+        scheduler.scheduleAtFixedRate(() -> emitOneTrace(), initialDelayMs,
+                periodMs / this.tracesPerHour, TimeUnit.MILLISECONDS);
     }
 
     public void shutdown() {
@@ -81,7 +83,7 @@ public class ScheduledTraceGenerator {
 
             if (this.logLevel == LogLevel.Verbose) {
                 logger.info(String.format("Emitted traceId %s for service %s route %s",
-                    traceId, this.service, this.route));
+                        traceId, this.service, this.route));
             }
             if (this.logLevel != LogLevel.Silent) {
                 this.summaryLogger.logEmit(1, trace.spans.size());

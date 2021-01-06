@@ -1,20 +1,21 @@
 package io.omnition.loadgenerator;
 
-import static org.junit.Assert.assertTrue;
-
 import org.junit.Test;
 
 /**
  * Unit test for simple App.
  */
-public class AppTest 
-{
-    /**
-     * Rigorous Test :-)
-     */
+public class AppTest {
+
     @Test
-    public void shouldAnswerWithTrue()
-    {
-        assertTrue( true );
+    public void runLocalJaegerCollector() {
+        App.main(new String[]{
+                "--paramsFile",
+                "100_000_spans_per_second.json",
+                "--jaegerCollectorUrl",
+                "http://localhost:14268",
+                "--initialDelayMs", "100",
+                "--periodMs", "100"
+        });
     }
 }
