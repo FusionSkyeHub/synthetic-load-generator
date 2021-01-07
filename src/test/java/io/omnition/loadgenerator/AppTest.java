@@ -16,17 +16,20 @@ public class AppTest {
         // ===================================================
         // opts
         // ===================================================
+        // 配置文件
         final String config = "100_000_spans_per_second.json";
+        // 启动延迟
         final String initialDelayMs = "100";
+        // 发送周期
         final String periodMs = "1000";
         // ===================================================
-        Path path = Paths.get(System.getProperty("user.dir"), "topologies", config);
-        if (!path.toFile().exists()) {
-            Assert.fail("rollegg!");
+        Path configPath = Paths.get(System.getProperty("user.dir"), "topologies", config);
+        if (!configPath.toFile().exists()) {
+            Assert.fail("rollegg! config file not exists!");
         }
         App.main(new String[]{
                 "--paramsFile",
-                path.toString(),
+                configPath.toString(),
                 "--jaegerCollectorUrl",
                 "http://localhost:14268",
                 "--initialDelayMs", initialDelayMs,
