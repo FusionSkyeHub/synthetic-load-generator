@@ -50,7 +50,7 @@ public class ScheduledTraceGenerator {
                 this.service, this.route, this.tracesPerHour));
 
         scheduler.scheduleAtFixedRate(() -> emitOneTrace(), initialDelayMs,
-                periodMs / this.tracesPerHour, TimeUnit.MILLISECONDS);
+                periodMs, TimeUnit.MILLISECONDS);
     }
 
     public void shutdown() {
