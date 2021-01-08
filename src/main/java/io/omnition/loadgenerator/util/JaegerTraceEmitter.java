@@ -47,7 +47,10 @@ public class JaegerTraceEmitter implements ITraceEmitter {
         final Map<UUID, io.opentracing.Span> convertedSpans = new HashMap<>();
         Consumer<Span> createOtSpan = span -> {
             boolean extract = StringUtils.isEmpty(traceId.getValue());
-            Tracer tracer = getTracer(span.service);
+            Tracer tracer;
+            synchronized (this) {
+                tracer = getTracer(span.service);
+            }
             io.opentracing.Span otSpan = OpenTracingTraceConverter.createOTSpan(
                 tracer, span, convertedSpans
             );

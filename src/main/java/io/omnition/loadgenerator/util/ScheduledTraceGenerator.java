@@ -6,6 +6,7 @@ import org.apache.log4j.Logger;
 
 import java.time.Duration;
 import java.util.List;
+import java.util.Random;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -44,13 +45,11 @@ public class ScheduledTraceGenerator {
         this.logLevel = logLevel;
         this.summaryLogger = summaryLogger;
     }
-
+    private Random rnd = new Random();
     public void start(long initialDelayMs, long periodMs) {
         logger.info(String.format("Starting trace generation for service %s, route %s, %d traces/hr",
                 this.service, this.route, this.tracesPerHour));
-
-        scheduler.scheduleAtFixedRate(() -> emitOneTrace(), initialDelayMs,
-                periodMs, TimeUnit.MILLISECONDS);
+        scheduler.scheduleAtFixedRate(() -> emitOneTrace(), initialDelayMs, periodMs, TimeUnit.MILLISECONDS);
     }
 
     public void shutdown() {
